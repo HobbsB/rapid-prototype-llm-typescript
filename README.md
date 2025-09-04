@@ -54,7 +54,7 @@ OPENROUTER_API_KEY=your_key_here
 
 ---
 
-## Install & first run (5-minute win)
+## Install & first run 
 
 ```bash
 yarn install
@@ -188,12 +188,13 @@ The repo includes a `.cursorrules` tuned for this project:
 
 ### Example
 try the following prompt in cursor or claude code
-'''
+
+```text
 Create a new llm task and script to call it that:
 	1. Asks the user for a list of ingredients they have available
 	2. Calls a prompt that asks the llm to generate a dinner recipe that contains those ingredience
 	3. saves the recipe in a json file 
-'''
+```
 
 ---
 
