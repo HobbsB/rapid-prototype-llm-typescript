@@ -72,13 +72,13 @@ You should see a success/diagnostic message confirming API connectivity, along w
 yarn script example-workflow
 ```
 
-This runs a simple, interactive LLM workflow using the framework's **Prompt Task** pattern.
+This runs a simple, interactive LLM workflow using the project's **Prompt Task** pattern.
 
 ```bash
 yarn script example-agent
 ```
 
-This runs an interactive agent demo (bread-recipe use case) using the framework’s **Agent** pattern.
+This runs an interactive agent demo (bread-recipe use case) using the project’s **Agent** pattern.
 
 ---
 
@@ -202,7 +202,7 @@ Create a new llm task and script to call it that:
 * **New Prompt Task:** copy an existing Task, change the **Zod** schema + prompts.
 * **New Agent:** copy an Agent, define **tools** and a clear **termination** condition.
 * **New script:** drop a `*.ts` into `src/scripts` and run with `yarn script <name>`.
-* Utilities: `AsyncRateLimiter` for production ready + heavy parallelized tasks
+* **Utilities:** `AsyncRateLimiter` for production ready + heavy parallelized tasks
 
 ## Moving from prototyping to more productization
 
@@ -227,39 +227,9 @@ TODO:
 
 ---
 
-## Why This Design?
-
-This framework makes specific architectural choices to balance ease of use with production readiness:
-
-### Dual Pattern Approach
-**Prompt Tasks** (single-prompt, typed) vs **Agents** (multi-step, tools) serve different use cases:
-- **Tasks** for focused operations like data extraction, content generation
-- **Agents** for interactive workflows requiring tool calls and conversation state
-
-### Cost-Conscious Model Selection
-Models are pre-selected for reliability and cost-effectiveness:
-- **Fast/Efficient:** Gemini Flash for quick, reliable responses
-- **Balanced:** Llama 4 Maverick for more intelligence without reasoning overhead
-- **High-Capability:** GPT-OSS models when you need reasoning power
-
-### Abstraction Layer Benefits
-The framework hides some Vercel AI SDK complexity with sensible defaults to help rapid development while still enabling customization:
-- **Less boilerplate** for common LLM operations
-- **Consistent patterns** across all services
-- **Type safety** from input to output
-- **Easy testing** with dependency injection
-
-### Sensible Defaults
-The `OpenRouterPromptRunner` abstracts away common configuration complexity with carefully chosen defaults:
-- **Model Selection & Generation Parameters**: Preconfigured setup for cost-effective models in OpenRouter, with balanced temperature settings, removing less usedsettings for most purposes.
-- **Error Handling & Resilience**: Includes automatic retry logic for parsing failures, timeout protection, and graceful error recovery to ensure reliable operation without manual intervention
-- **Provider Configuration**: Handles OpenRouter API setup, tool call edge case fixes, and optional debug logging, keeping the core business logic clean and focused
-
----
-
 ## Why These Libraries?
 
-The framework builds on libraries chosen for specific strengths:
+Specifically targetted towards typescript, this project builds on libraries chosen for specific strengths:
 
 ### Zod (Schema Validation)
 - **Runtime validation** + **TypeScript types** = bulletproof I/O
@@ -281,11 +251,42 @@ The framework builds on libraries chosen for specific strengths:
 
 ---
 
+## Why This Design?
+
+This project makes specific architectural choices to balance ease of use with production readiness:
+
+### Dual Pattern Approach
+**Prompt Tasks** (single-prompt, typed) vs **Agents** (multi-step, tools) serve different use cases:
+- **Tasks** for focused operations like data extraction, content generation
+- **Agents** for interactive workflows requiring tool calls and conversation state
+
+### Cost-Conscious Model Selection
+Models are pre-selected for reliability and cost-effectiveness:
+- **Fast/Efficient:** Gemini Flash for quick, reliable responses
+- **Balanced:** Llama 4 Maverick for more intelligence without reasoning overhead
+- **High-Capability:** GPT-OSS models when you need reasoning power
+
+### Abstraction Layer Benefits
+This project hides some Vercel AI SDK complexity with sensible defaults to help rapid development while still enabling customization:
+- **Less boilerplate** for common LLM operations
+- **Consistent patterns** across all services
+- **Type safety** from input to output
+- **Easy testing** with dependency injection
+
+### Sensible Defaults
+The `OpenRouterPromptRunner` abstracts away common configuration complexity with carefully chosen defaults:
+- **Model Selection & Generation Parameters**: Preconfigured setup for cost-effective models in OpenRouter, with balanced temperature settings, removing less usedsettings for most purposes.
+- **Error Handling & Resilience**: Includes automatic retry logic for parsing failures, timeout protection, and graceful error recovery to ensure reliable operation without manual intervention
+- **Provider Configuration**: Handles OpenRouter API setup, tool call edge case fixes, and optional debug logging, keeping the core business logic clean and focused
+
+---
+
 ## Advanced Patterns & Tool Design
 
 ### Three-Tool Architecture for Agents
 
 Agents use three types of tools for different interaction patterns:
+**Straight from the Vercel AI SDK.*
 
 #### 1. Action Tools (Execute Operations)
 ```typescript
