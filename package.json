@@ -1,0 +1,19 @@
+{
+  "name": "rapidprototype-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "rapidprototype"
+  ],
+  "scripts": {
+    "build": "yarn workspaces run build",
+    "dev": "yarn workspaces foreach -p run dev",
+    "type-check": "yarn workspaces run type-check",
+    "lint": "yarn workspaces run lint",
+    "script": "yarn workspace @rapidprototype-monorepo/rapidprototype tsx src/run-script.ts"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5"
+  }
+}

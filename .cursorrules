@@ -1,0 +1,448 @@
+project_overview: A llm rapidp rototyping tutorial that includes demo node typescript scripts and supporting service classes and llm prompt services
+project_type: Node Typescript
+dev OS: **Windows with Powershell**
+package manager: yarn
+
+This TypeScript repository contains local development typescript scripts. It utilizes **node, typescript, yarn, tsx** with primary packages of **ai (vercel ai sdk), openrouter ai sdk provider, and zod**. 
+- It is a monorepo that currently contains a single workspace "rapidprototype".
+
+# Project Guidelines
+
+## General Guidelines
+- Adhere to conventions and best practices for the used technologies in all tasks.
+- Any changes should be done with the minimum necessary modification while ensuring scalability and reusability, maintaining the folder structure and patterns.
+- Keep scripts lean, delegating business logic to appropriate shared services.
+- All command line scripts should use powershell syntax (uses ";" instead of "&").
+- Don't create or update a readme unless asked to do so specifically.
+
+## Dependencies and Imports
+- Use relative paths for internal imports within the same workspace (e.g. `../services/llmProviders`)
+- Import from service index files when possible (e.g. `import { AsyncRateLimiter } from '../services/rateLimiter'`)
+
+## Library Integration Best Practices
+- Always verify compatibility with libraries
+- Always check and try to use solutions for already included libraries before creating custom implementations
+- Avoid installing new packages unless asked to do so explicitely. 
+
+## TypeScript Best Practices
+- Always safely handle nulls and undefineds when accessing data, use optional chaining when the value is not guaranteed to be present
+- Always use proper typing for all functions and variables
+- Avoid `any` unless absolutely necessary
+
+## File Naming Conventions
+- Use camelCase for files containing functions and utilities
+- Use PascalCase for type definition files
+- Append type definitions with `.types.ts`
+- Keep function names descriptive and aligned with their purpose
+
+
+# Folder Structure
+Follow this structure for organizing the codebase:
+```
+/
+  package.json        # Main monorepo configuration defining workspaces
+  .env                # Root environment variables for the application
+  README.md           # Project documentation
+  
+  /rapidprototype/           # Main workspace containing the LLM scripting application
+    /src                 # Source code for the application
+      config.ts          # Application configuration and environment variables
+      run-script.ts      # Dynamic script runner utility
+
+      /llmServices       # All LLM-related functionality
+        basePromptTaskService.ts    # Base class for single prompt executions
+        baseAgentService.ts     # Base class for multi-step agent conversations
+        index.ts               # Exports all LLM services
+        /promptTasks               # Individual LLM prompt services
+          forecastExtractor.ts # Market forecast extraction service
+          testLlmService.ts   # Test LLM service
+        /agents                # Autonomous LLM agents with tool usage
+          breadRecipeAgent.ts # Example bread recipe generation agent
+
+      /scripts            # Executable scripts (run via yarn script <name>)
+        testArguments.ts
+        testAsyncRateLimiter.ts
+        testModelConsistency.ts
+        testResearcher.ts
+        testSharedService.ts
+        testVercel.ts
+        testVercelAgent.ts
+        testVercelModelConsistency.ts
+        testVercelStreaming.ts
+
+      /services           # Shared service classes and utilities
+        index.ts          # Exports all shared services
+        /exampleService   # Example service implementation
+        /llmProviders     # LLM provider implementations
+          index.ts
+          openRouterPromptRunner.ts
+          promptRunnerInterface.ts
+          promptUtils.ts
+        /rateLimiter      # Rate limiting utilities
+          asyncRateLimiter.ts
+          index.ts
+          README.md
+          syncRateLimiter.ts
+        /scriptSaveData   # Data persistence for scripts
+          index.ts
+          scriptSaveService.ts
+          types.ts
+
+    package.json          # Workspace dependencies and scripts
+    tsconfig.json         # TypeScript compiler configuration
+  
+
+  
+# Code Organization
+- **LLM Services** (`/llmServices`): All LLM-related functionality including:
+  - **Prompt Tasks** (`/promptTasks`): Single prompt executions with typed inputs/outputs
+    - Extend BasePromptTaskService for specific use cases
+    - Focus on content generation and analysis operations
+  - **Agents** (`/agents`): Multi-step autonomous conversations with tool usage
+    - Extend BaseAgentService for interactive workflows
+    - Focus on complex processes requiring multiple LLM calls
+  - Base service classes and interfaces for both patterns
+  - Prompt engineering and LLM interactions
+
+- **Services** (`/services`): Shared service classes and utilities including:
+  - LLM provider implementations (OpenRouter, interfaces, utilities)
+  - Rate limiting utilities for API calls
+  - Data persistence services for scripts
+  - Example service implementations
+
+- **Scripts** (`/scripts`): Executable development and testing scripts that:
+  - Demonstrate LLM service usage
+  - Test various functionality
+  - Serve as development utilities
+
+
+
+# LLM Prompt Task Services 
+
+**Prompt Tasks** (`/llmServices/promptTasks`)
+   - Individual LLM prompt services for specific use cases
+   - Extend BasePromptTaskService with typed inputs and outputs
+   - Focus on a single, specific LLM operation with typed inputs and outputs
+   - Use naming convention "[Purpose]PromptTask" (e.g., ForecastExtractorPromptTask)
+
+## Core Structure
+```typescript
+export class [Purpose]PromptTask extends BasePromptTaskService<InputType, OutputType> {
+  constructor(config?: BasePromptServiceConfig) {
+    const runner = config?.runner || new OpenRouterPromptRunner(ModelType.GEMINI_CHEAP, 0.7);
+    super({ runner });
+  }
+
+  protected getSchema(): z.ZodType { return YourSchema; } // required
+  protected validateInput(input: InputType): void { /* optional, create method but default blank */ }
+  protected buildMessages(input: InputType): PromptRunnerTaskMessage[] { /* required */ }
+  protected getTaskConfig(input: void): TaskExecutionConfig | undefined { /* optional, create method but default blank */ }
+  private getSystemMessage(input: InputType): string //optional, recommended for buildMessages
+  private getUserMessage(input: InputType): string //optional, recommended for buildMessages
+  
+
+}
+```
+
+**Note:** Do not add public convenience methods that call `execute()` - the base class already provides this functionality.
+
+## Default Configuration
+Use these defaults when creating a new service. Never changes these in prompt services unless asked to explicitely.
+- **Model**: `GEMINI_CHEAP`
+- **Temperature**: `0.7` 
+- **Validation**: None 
+- **Schema**: Use a simple schema structure 
+
+## Type Definitions
+Add type definitions to the top of the prompt task file.
+
+```typescript
+export interface YourInput { /* TypeScript interface */ }
+export const YourSchema = z.object({ /* Zod schema */ });
+export type YourOutput = z.infer<typeof YourSchema>;
+```
+
+## Common Message Structure
+```typescript
+protected buildMessages(input: InputType): PromptRunnerTaskMessage[] {
+  return [
+    { role: 'system', content: this.getSystemMessage(input) },
+    { role: 'user', content: this.getUserMessage(input) }
+  ];
+}
+
+private getSystemMessage(input: InputType): string {
+  return `System instructions using ${input.property}`;
+}
+
+private getUserMessage(input: InputType): string {
+  return `Process this: ${input.data}`;
+}
+```
+
+
+## Key Patterns
+- **One task per service** - Single responsibility principle
+- **Simple prompts** - Keep instructions clear and focused
+- **Input validation** - Use `validateInput()` for business rules, if asked
+- **Output validation** - Use schemas for format requirements, but start out with no validation unless asked
+- **Model overrides** - Only when asked to explicitely
+
+## Best Practices
+- Create private methods for system and user prompts using input data, to be used by buildMessages
+- Use template literals and interpolation for dynamic content
+- Keep prompts simple and straightforward
+- Follow existing model settings without changes
+- Create their own PromptRunner default instance using the defaults
+
+
+# LLM Agents
+
+**Agents** (`/llmServices/agents`)
+- Autonomous services for multi-step LLM conversations with tool usage
+- Extend BaseAgentService with typed inputs and outputs
+- Focus on interactive workflows vs single prompt executions
+- Use naming convention "[Purpose]AgentService" (e.g., BreadRecipeAgentService)
+
+## Core Structure
+```typescript
+export class [Purpose]AgentService extends BaseAgentService<InputType, OutputType> {
+  constructor(config?: BaseAgentServiceConfig) {
+    const runner = config?.runner || new OpenRouterPromptRunner(ModelType.GEMINI_CHEAP, 0.7);
+    super({ runner });
+  }
+
+  protected getAgentConfig(): Partial<SimpleAgentConfig> { return { /* config */ }; } // optional
+  protected getSystemPrompt(input: InputType): string { /* workflow + tool rules */ } // required
+  protected getInitialPrompt(input: InputType): string { /* starting prompt */ } // required
+  protected getTools(): ToolSet { /* define available tools */ } // required
+  protected processAgentResult(result: GenerateTextResult): OutputType { /* extract results */ } // required
+}
+```
+
+## Default Configuration
+Use these defaults when creating a new agent. Never change unless asked explicitly.
+- **Model**: `GEMINI_CHEAP`
+- **Temperature**: `0.7`
+- **Tool Choice**: `'auto'` (let model decide)
+- **Max Steps**: `10` (prevents infinite loops)
+- **Debug**: `false`
+
+## Type Definitions
+Add type definitions to the top of the agent file.
+
+```typescript
+export interface YourAgentInput { /* Input data structure */ }
+export interface YourAgentOutput { /* Output data structure */ }
+
+// Tool interfaces for type safety
+interface YourToolInput { /* Tool input parameters */ }
+interface YourToolOutput { /* Tool return data */ }
+```
+
+## Tool Design Patterns
+
+### Action Tools (with execute functions)
+```typescript
+const searchTool = tool({
+  description: 'Search for information',
+  inputSchema: z.object({
+    query: z.string().describe('Search query'),
+    category: z.enum(['web', 'database']).describe('Search type')
+  }),
+  execute: async ({ query, category }) => {
+    // Implementation logic
+    return searchResults;
+  }
+});
+```
+
+### Answer Tools (no execute - terminates agent)
+```typescript
+const answerTool = tool({
+  description: 'Provide final structured result',
+  inputSchema: z.object({
+    title: z.string().describe('Result title'),
+    content: z.string().describe('Complete content'),
+    confidence: z.number().min(1).max(10).describe('Confidence score')
+  })
+  // No execute function - calling this ends the agent
+});
+```
+
+### User Interaction Tools
+```typescript
+const requestInputTool = tool({
+  description: 'Request user input for preferences',
+  inputSchema: z.object({
+    question: z.string().describe('Question to ask user'),
+    context: z.string().describe('Why this info is needed')
+  }),
+  execute: async ({ question, context }) => {
+    // Handle user interaction
+    return userResponse;
+  }
+});
+```
+
+## System Prompt Engineering
+
+### Workflow Structure
+```typescript
+protected getSystemPrompt(input: InputType): string {
+  return `You are a [ROLE] assistant that helps users [MAIN_PURPOSE].
+
+CRITICAL WORKFLOW PHASES:
+Phase 1 ([PURPOSE]): Use [TOOL_NAME] to [ACTION]
+Phase 2 ([PURPOSE]): Use [TOOL_NAME] to [ACTION]
+Phase 3 (FINALIZATION): Use answer tool to provide complete result
+
+TOOL USAGE RULES:
+- Use [TOOL_NAME] ONLY in [SPECIFIC_PHASE]
+- Use answer tool ONLY when you have [COMPLETION_CRITERIA]
+
+LOOP PREVENTION:
+- Do NOT call the same tool more than 3 times in a row
+- Always progress toward the answer tool - don't get stuck
+
+ALWAYS END with answer tool - provide complete result and stop.`;
+}
+```
+
+## Key Patterns
+- **Start small** - New agents should be started with the minimum amount of complexity, to be built up iteratively
+- **One agent per workflow** - Single responsibility for specific task type
+- **Phase-based progression** - Clear workflow stages with transition conditions
+- **Constrained tool schemas** - Use enums and validation to prevent input errors
+- **Answer tool termination** - Always include tool to provide final structured result
+- **Loop prevention** - Tool limits and quality gates to avoid infinite conversations
+
+
+## Best Practices
+- Start small and then only expand to more tools/complexity after feedback
+- Create private helper methods for complex tool logic
+- Use type guards for safe tool result extraction
+- Include try catch error handling in tool execute functions, return the error
+- Enable debug logging during development (`debug: true`)
+
+
+
+# Scripts
+Scripts are executable development utilities that demonstrate functionality and support rapid experimentation.
+
+- Scripts should be well organized and written using the appropriate services and shared utilities 
+for reusability. They should be kept simple and straight forward, taking the least complex implementation path to reach their goals.
+- Scripts should be added in the `rapidprototype/src/scripts` folder.
+- Scripts located in the scripts folder will be automatically able to be run via `yarn script [ScriptNameWithoutSuffix]`. This command will work from either the monorepo root or from the workspace directory.
+- The `run-script.ts` utility handles dynamic script execution for `yarn script` without needing individual entries 
+in package.json.
+
+
+## Core Structure
+```typescript
+import chalk from 'chalk';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import promptSync from 'prompt-sync';
+// Import services as needed: { YourService } from '../services/...'
+// Import prompts as needed: { PurposePromptService } from '../llmServices/promptTasks/...'
+
+interface ScriptParams {
+  // Define parameter interface
+}
+
+async function parseArguments(): Promise<ScriptParams> {
+  const argv = await yargs(hideBin(process.argv))
+    .option('param', {
+      type: 'string',
+      description: 'Description',
+      required: true
+    })
+    .parseAsync();
+  return { ...argv };
+}
+
+async function main() {
+  const params = await parseArguments();
+
+  // Interactive prompts using promptSync for missing required params or any other input required
+  if (!params.optionalParam) {
+    const prompt = promptSync({ sigint: true });
+    params.optionalParam = prompt('Enter value: ');
+  }
+
+  // Core script logic method calls go here
+}
+
+main().catch(error => {
+  console.error(chalk.red('Error:'), error);
+  process.exit(1);
+});
+```
+
+## Key Patterns
+- **Arguments**: Use `yargs` for command-line arguments with `ScriptParams` interface for type safety
+- **User Input**: Use `prompt-sync` for interactive prompts 
+- **Output**: Use `chalk` for colored console formatting
+- **Services**: Import shared services from `../services/` index files when needed. Create new services here to be shared across other scripts.
+- **Prompt Tasks**: Import llm prompt services from `../llmServices/promptTasks` index files when needed. Create new prompts here following the standards.
+- **Persistence**: If asked to save a file or report, use `ScriptSaveService` 
+- **Concurrency with rate limiting**: When running large volume of prompts or api calls, consider using the asyncRateLimiter
+
+## Best Practices
+- Keep scripts focused on single responsibilities
+- Delegate complex logic to appropriate services
+- Use TypeScript interfaces for all data structures
+- Include helpful console output and progress indicators
+- Scripts are added to `rapidprototype/src/scripts` and run via `yarn script [ScriptNameWithoutSuffix]`
+
+
+# Rate Limiting Guidelines
+When implementing rate-limited operations in scripts
+
+1. Use the shared `AsyncRateLimiter` from `/services/rateLimiter/asyncRateLimiter`:
+   ```typescript
+   const rateLimiter = new AsyncRateLimiter({
+     maxConcurrent: 5,      // Concurrent operations
+     intervalCap: 20,       // Requests per window
+     interval: 10000,       // Window size in ms
+     minTime?: 200          // Min time between requests (will be auto-calculated if not set)
+   });
+   ```
+
+2. Always process items in batches using typed parameters:
+   ```typescript
+   const { successful, failed } = await rateLimiter.processItems<InputType, OutputType>(
+     items,
+     async (item) => {
+       // Process single item
+       return result;
+     }
+   );
+   ```
+
+3. Handle partial success scenarios:
+   - Track both successful and failed items
+   - Report errors in the appropriate format for the script or service
+   - Continue processing despite individual failures
+
+4. Error Handling Pattern:
+   ```typescript
+   let processingErrors: ProcessingError<YourType>[] = [];
+   const { successful, failed } = await rateLimiter.processItems(...);
+   
+   // Convert errors to domain format
+   const errorsToReport = failed.map(err => ({
+     itemId: err.item.id,
+     error: err.error.message
+   }));
+   ```
+
+5. Troubleshooting
+  - See rapidprototype\src\services\rateLimiter\README.md for more details on troubleshooting setup.
+
+
+
+
+
+
