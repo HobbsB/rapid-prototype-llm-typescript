@@ -32,7 +32,7 @@ It's a small but good start to a **pattern catalog** that are transferable to ot
 
 ## Who this is for — and what you’ll get
 
-* **Audience:** Mid-Staff level engineers expirmenting with LLM agents/workflows, or those exploring patterns for rapid (yet production grade) implementations.
+* **Audience:** Mid-Staff level engineers experimenting with LLM agents/workflows, or those exploring patterns for rapid (yet production grade) implementations.
 * **You get:**
   * Two core patterns: **Prompt Tasks** (single-shot, typed) and **Agents** (multi-step, tools).
   * A **curated model shortlist** that’s cost-sane and “just works.”
@@ -275,7 +275,7 @@ This project hides some Vercel AI SDK complexity with sensible defaults to help 
 
 ### Sensible Defaults
 The `OpenRouterPromptRunner` abstracts away common configuration complexity with carefully chosen defaults:
-- **Model Selection & Generation Parameters**: Preconfigured setup for cost-effective models in OpenRouter, with balanced temperature settings, removing less usedsettings for most purposes.
+- **Model Selection & Generation Parameters**: Preconfigured setup for cost-effective models in OpenRouter, with balanced temperature settings, removing less used settings for most purposes.
 - **Error Handling & Resilience**: Includes automatic retry logic for parsing failures, timeout protection, and graceful error recovery to ensure reliable operation without manual intervention
 - **Provider Configuration**: Handles OpenRouter API setup, tool call edge case fixes, and optional debug logging, keeping the core business logic clean and focused
 
